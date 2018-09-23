@@ -1,77 +1,51 @@
 import React, { Component } from 'react';
-
-import Post from '../../components/Post/Post';
-import FullPost from '../../components/FullPost/FullPost';
-import NewPost from '../../components/NewPost/NewPost';
+import Posts from './Posts/Posts'
+// import NewPost from './NewPost/NewPost'
+import asyncComponent from '../../Hoc/asyncComponent'
+import FullPost from './FullPost/FullPost'
 import './Blog.css';
 import axios from 'axios'
+import { Route, NavLink, Switch, Redirect } from 'react-router-dom'
+
+const AsyncNewPost = asyncComponent(() => {
+  return import('./NewPost/NewPost')
+})
 
 class Blog extends Component {
 
-    state = {
-      posts: [],
-      selectedPostId: null,
-      error: false
-    }
-
-    componentDidMount() {
-      axios.get('https://jsonplaceholder.typicode.com/posts')
-        .then(response => {
-          let truncatedPosts = response.data.slice(0, 4)
-          truncatedPosts = truncatedPosts.map(post => {
-            return {
-              ...post,
-              author: 'Shahrukh'
-            }
-          })
-          this.setState({
-            posts: truncatedPosts
-          })
-        })
-        .catch(error => {
-          this.setState({error: true})
-        })
-    }
-
-    postSelectedHandler = (postId) => {
-      this.setState({
-        selectedPostId: postId
-      })
-    }
-
-
     render () {
-        let displayPosts = <p style={{textAlign: 'center'}}>Something went wrong</p>
-        if(!this.state.error) {
-          displayPosts = this.state.posts.map(post => {
-            return <Post
-            key={post.id}
-            title={post.title}
-            author={post.author}
-            clicked={() => this.postSelectedHandler(post.id)} />
-          })
-        }
 
         return (
             <div className="Blog">
               <header>
                 <nav>
                   <ul>
-                    <li><a href="/">Home</a></li>
-                    <li><a href="/new-post">New Post</a></li>
+                    <li>
+                      <NavLink
+                        to="/posts"
+                        exact
+                        activeClassName="my-class"
+                        activeStyle={{
+                          color: '#fa923f',
+                          textDecoration: 'underline'
+                        }}>Home</NavLink>
+                    </li>
+                    <li>
+                      <NavLink exact to={{
+                          pathname: '/new-post',
+                          hash: '#new',
+                          search: '?type=good'
+                        }}>New Post</NavLink>
+                    </li>
                   </ul>
                 </nav>
-
               </header>
-                <section className="Posts">
-                    {displayPosts}
-                </section>
-                <section>
-                    <FullPost id={this.state.selectedPostId}/>
-                </section>
-                <section>
-                    <NewPost />
-                </section>
+              <Switch>
+                <Route path="/new-post" exact component={AsyncNewPost} />
+                <Route path="/posts" component={Posts} />
+                <Redirect from='/' to='/posts' />
+                <Route render={() => <h1>404 not found</h1>} />
+              </Switch>
             </div>
         );
     }
